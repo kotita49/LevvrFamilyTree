@@ -1,0 +1,169 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Person
+{
+    public string Name { get; set; }
+    public List<Person> Parents { get; set; } = new List<Person>();
+    public List<Person> Children { get; set; } = new List<Person>();
+
+    public Person(string name)
+    {
+        Name = name;
+    }
+}
+
+public class FamilyTree
+{
+    static Dictionary<string, Person> people = new Dictionary<string, Person>();
+
+    public static Person GetOrCreatePerson(string name)
+    {
+        if (!people.ContainsKey(name))
+        {
+            people[name] = new Person(name);
+        }
+        return people[name];
+    }
+
+    static void AddParentChildRelation(Person parent, Person child)
+    {
+        // Ensure no duplicates in the parent's or child's relationship lists
+        if (!child.Parents.Contains(parent))
+        {
+            child.Parents.Add(parent);
+        }
+        if (!parent.Children.Contains(child))
+        {
+            parent.Children.Add(child);
+        }
+    }
+
+    static void AddSiblingRelation(Person sibling1, Person sibling2)
+    {
+        // Add shared parents between siblings
+        foreach (var parent in sibling1.Parents)
+        {
+            AddParentChildRelation(parent, sibling2);
+        }
+        foreach (var parent in sibling2.Parents)
+        {
+            AddParentChildRelation(parent, sibling1);
+        }
+    }
+
+    public static void ProcessCommand(string command)
+    {
+        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 3)
+        {
+            Console.WriteLine("Invalid command. Please try again.");
+            return;
+        }
+
+        string person1Name = parts[0];
+        string relation = parts[1];
+        string person2Name = parts[2];
+
+        Person person1 = GetOrCreatePerson(person1Name);
+        Person person2 = GetOrCreatePerson(person2Name);
+
+        switch (relation)
+        {
+            case "P": // Parent
+                AddParentChildRelation(person2, person1);
+                Console.WriteLine($"{person2.Name} is {person1.Name}'s parent.");
+                break;
+
+            case "C": // Child
+                AddParentChildRelation(person1, person2);
+                Console.WriteLine($"{person2.Name} is {person1.Name}'s child.");
+                break;
+                           
+
+            case "S": // Sibling
+                AddSiblingRelation(person1, person2);
+                Console.WriteLine($"{person2.Name} is {person1.Name}'s sibling.");
+                break;
+
+            case "PS": // Parent's sibling (aunt/uncle)
+                foreach (var parent in person1.Parents)
+                {
+                    // Add a sibling relationship between the parent of person1 and person2
+                    AddSiblingRelation(parent, person2);
+                }
+                Console.WriteLine($"{person2.Name} is {person1.Name}'s aunt/uncle.");
+                break;
+
+            default:
+                Console.WriteLine("Invalid relation type. Please use P, C, S, or PS.");
+                break;
+        }
+    }
+
+    static void PrintTree(Person person, int depth, List<string> visited)
+    {
+        if (visited.Contains(person.Name)) return;
+
+        // Mark the person as visited to avoid reprinting
+        visited.Add(person.Name);
+
+        // Print all parents at the same depth
+        var parents = person.Parents.OrderBy(p => p.Name).ToList();
+        foreach (var parent in parents)
+        {
+            if (!visited.Contains(parent.Name))
+            {
+                PrintTree(parent, depth - 1, visited);
+            }
+        }
+
+        // Print the person's name at the appropriate depth
+        Console.WriteLine(new string(' ', depth * 4) + person.Name);
+
+        // Print all children recursively
+        var children = person.Children.OrderBy(c => c.Name).ToList();
+        foreach (var child in children)
+        {
+            if (!visited.Contains(child.Name))
+            {
+                PrintTree(child, depth + 1, visited);
+            }
+        }
+    }
+
+
+
+    static void Main()
+    {
+        Console.WriteLine("Family Tree Application");
+        Console.WriteLine("Enter commands to build the family tree, or type 'PRINT' to display the tree.");
+        Console.WriteLine("Type 'EXIT' to quit the program.");
+        Console.WriteLine("Command format: [Person1] [Relation] [Person2] (for relation use P (parent), C (child), S (sibling), PS (parent sibling)");
+
+        while (true)
+        {
+            Console.Write(" ");
+            string input = Console.ReadLine();
+            if (input.Equals("EXIT", StringComparison.OrdinalIgnoreCase))
+            {
+                break;
+            }
+            else if (input.Equals("PRINT", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Family Tree:");
+                var oldestMembers = people.Values.Where(p => p.Parents.Count == 0).OrderBy(p => p.Name);
+                var visited = new List<string>();
+                foreach (var member in oldestMembers)
+                {
+                    PrintTree(member, 0, visited);
+                }
+            }
+            else
+            {
+                ProcessCommand(input);
+            }
+        }
+    }
+}
