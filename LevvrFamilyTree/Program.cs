@@ -110,26 +110,18 @@ public class FamilyTree
         visited.Add(person.Name);
 
         // Print all parents at the same depth
-        var parents = person.Parents.OrderBy(p => p.Name).ToList();
-        foreach (var parent in parents)
+        foreach (var parent in person.Parents.OrderBy(p => p.Name))
         {
-            if (!visited.Contains(parent.Name))
-            {
-                PrintTree(parent, depth - 1, visited);
-            }
+            PrintTree(parent, depth - 1, visited);
         }
 
         // Print the person's name at the appropriate depth
         Console.WriteLine(new string(' ', depth * 4) + person.Name);
 
         // iterate over all children and print them
-        var children = person.Children.OrderBy(c => c.Name).ToList();
-        foreach (var child in children)
+        foreach (var child in person.Children.OrderBy(c => c.Name))
         {
-            if (!visited.Contains(child.Name))
-            {
-                PrintTree(child, depth + 1, visited);
-            }
+            PrintTree(child, depth + 1, visited);
         }
     }
 
