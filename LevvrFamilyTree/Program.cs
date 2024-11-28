@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-public class Person
+﻿public class Person
 {
     public string Name { get; set; }
     public List<Person> Parents { get; set; } = new List<Person>();
@@ -102,7 +98,7 @@ public class FamilyTree
         }
     }
 
-    static void PrintTree(Person person, int depth, List<string> visited)
+    public static void PrintTree(Person person, int depth, List<string> visited)
     {
         if (visited.Contains(person.Name)) return;
 
@@ -133,7 +129,10 @@ public class FamilyTree
         }
     }
 
-
+    public static void ClearTree()
+    {
+        people.Clear();
+    }
 
     static void Main()
     {
@@ -153,11 +152,11 @@ public class FamilyTree
             else if (input.Equals("PRINT", StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine("Family Tree:");
-                var oldestMembers = people.Values.Where(p => p.Parents.Count == 0).OrderBy(p => p.Name);
-                var visited = new List<string>();
-                foreach (var member in oldestMembers)
+                var oldestWithMostOffspring = FindOldestWithMostDescendants();
+                if (oldestWithMostOffspring != null)
                 {
-                    PrintTree(member, 0, visited);
+                    var visited = new List<string>();
+                    PrintTree(oldestWithMostOffspring, 0, visited);
                 }
             }
             else
@@ -166,4 +165,28 @@ public class FamilyTree
             }
         }
     }
+
+    public static Person? FindOldestWithMostDescendants()
+    {
+        // Helper method to calculate total descendants of a person 
+        int CountDescendants(Person person)
+        {
+            if (person.Children.Count == 0) return 0; 
+            int count = person.Children.Count; // Count direct children
+            foreach (var child in person.Children)
+            {
+                count += CountDescendants(child); // Add descendants of each child
+            }
+            return count;
+        }
+
+        // Find all people who have no parents (oldest members)
+        var oldestMembers = people.Values.Where(p => p.Parents.Count == 0);
+
+        // Find the oldest member with the most descendants
+        return oldestMembers
+       .OrderByDescending(person => CountDescendants(person))
+       .FirstOrDefault();
+    }
+
 }
