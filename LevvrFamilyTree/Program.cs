@@ -47,6 +47,10 @@ public class FamilyTree
         {
             AddParentChildRelation(parent, sibling1);
         }
+
+        sibling1.Parents.AddRange(sibling2.Parents.Except(sibling1.Parents));
+        sibling2.Parents.AddRange(sibling1.Parents.Except(sibling2.Parents));
+
     }
 
     public static void ProcessCommand(string command)
@@ -118,7 +122,7 @@ public class FamilyTree
         // Print the person's name at the appropriate depth
         Console.WriteLine(new string(' ', depth * 4) + person.Name);
 
-        // Print all children recursively
+        // iterate over all children and print them
         var children = person.Children.OrderBy(c => c.Name).ToList();
         foreach (var child in children)
         {
@@ -152,11 +156,11 @@ public class FamilyTree
             else if (input.Equals("PRINT", StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine("Family Tree:");
-                var oldestWithMostOffspring = FindOldestWithMostDescendants();
-                if (oldestWithMostOffspring != null)
+                var oldestWithMostDescendants = FindOldestWithMostDescendants();
+                if (oldestWithMostDescendants != null)
                 {
                     var visited = new List<string>();
-                    PrintTree(oldestWithMostOffspring, 0, visited);
+                    PrintTree(oldestWithMostDescendants, 0, visited);
                 }
             }
             else
@@ -180,7 +184,7 @@ public class FamilyTree
             return count;
         }
 
-        // Find all people who have no parents (oldest members)
+        // Find all people who have no parents (most likely oldest members)
         var oldestMembers = people.Values.Where(p => p.Parents.Count == 0);
 
         // Find the oldest member with the most descendants
